@@ -2,13 +2,12 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "title": {
     "text": "Do service supply and passenger use match by mode?",
-    "subtitle": "Solid line = share of trips (use). Dashed line = share of stops (supply). If solid > dashed, demand is higher than stop share."
+    "subtitle": "Solid line = share of trips (use). Dashed line = share of stops (supply). When solid > dashed, that mode carries more demand than its stop share."
   },
   "width": 900,
   "height": 420,
   "data": {
-    "url": "../data/Monthly%20public%20transport%20patronage%20by%20mode.csv",
-    "format": { "type": "csv" }
+    "url": "../data/Monthly%20public%20transport%20patronage%20by%20mode.csv"
   },
   "params": [
     {
@@ -29,11 +28,8 @@
     }
   ],
   "transform": [
-    { "calculate": "toNumber(datum.Year)", "as": "YearNum" },
-    { "calculate": "toNumber(datum.Month)", "as": "MonthNum" },
-    { "filter": "datum.YearNum < 2026" },
-
-    { "calculate": "datetime(datum.YearNum, datum.MonthNum - 1, 1)", "as": "Date" },
+    { "filter": "datum.Year < 2026" },
+    { "calculate": "datetime(datum.Year, datum.Month - 1, 1)", "as": "Date" },
 
     {
       "fold": [
@@ -50,7 +46,9 @@
     { "calculate": "toNumber(replace(datum.Patronage, /,/g, ''))", "as": "Trips" },
 
     {
-      "joinaggregate": [{ "op": "sum", "field": "Trips", "as": "TotalTrips" }],
+      "joinaggregate": [
+        { "op": "sum", "field": "Trips", "as": "TotalTrips" }
+      ],
       "groupby": ["Date"]
     },
 
@@ -64,7 +62,7 @@
     {
       "lookup": "StopModeKey",
       "from": {
-        "data": { "url": "../data/supply_shares.csv", "format": { "type": "csv" } },
+        "data": { "url": "../data/supply_shares.csv" },
         "key": "MODE",
         "fields": ["SupplyShare", "StopCount"]
       }
@@ -75,7 +73,6 @@
 
     { "calculate": "datum.TripShare - datum.SupplyShare", "as": "Gap" }
   ],
-
   "layer": [
     {
       "mark": { "type": "area", "opacity": 0.18 },
@@ -91,7 +88,6 @@
         "y2": { "field": "SupplyShare" }
       }
     },
-
     {
       "mark": { "type": "line", "strokeWidth": 2.8 },
       "encoding": {
@@ -112,7 +108,6 @@
         ]
       }
     },
-
     {
       "mark": { "type": "line", "strokeDash": [6, 4], "strokeWidth": 2 },
       "encoding": {
