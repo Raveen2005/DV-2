@@ -15,7 +15,7 @@ function embedAll() {
   vegaEmbed("#vis9",  "charts/vis9_transport_housing_scatter.json", embedOpts).catch(console.error);
 
   // FIX: your file is named vis10_supply_vs_use_share.json (not ..._use_shar.json)
-  vegaEmbed("#vis10", "charts/vis10_supply_vs_use_share.json", embedOpts).catch(console.error);
+  vegaEmbed("#vis10", "/DV-2/charts/vis10_supply_vs_use_share.json", {actions:false}).catch(console.error);
 }
 
 // Run after the page has built all #vis* containers.
