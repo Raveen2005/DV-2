@@ -1,0 +1,128 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Do service supply and passenger use match by mode?",
+    "subtitle": "Solid line = share of trips (use). Dashed line = share of stops (supply). If solid > dashed, demand is higher than stop share."
+  },
+  "width": 900,
+  "height": 420,
+  "data": {
+    "url": "../data/Monthly%20public%20transport%20patronage%20by%20mode.csv",
+    "format": { "type": "csv" }
+  },
+  "params": [
+    {
+      "name": "ModeSelect",
+      "value": "Metropolitan train",
+      "bind": {
+        "input": "select",
+        "options": [
+          "Metropolitan bus",
+          "Metropolitan train",
+          "Metropolitan tram",
+          "Regional bus",
+          "Regional train",
+          "Regional coach"
+        ],
+        "name": "Select mode: "
+      }
+    }
+  ],
+  "transform": [
+    { "calculate": "toNumber(datum.Year)", "as": "YearNum" },
+    { "calculate": "toNumber(datum.Month)", "as": "MonthNum" },
+    { "filter": "datum.YearNum < 2026" },
+
+    { "calculate": "datetime(datum.YearNum, datum.MonthNum - 1, 1)", "as": "Date" },
+
+    {
+      "fold": [
+        "Metropolitan bus",
+        "Metropolitan train",
+        "Metropolitan tram",
+        "Regional bus",
+        "Regional train",
+        "Regional coach"
+      ],
+      "as": ["Mode", "Patronage"]
+    },
+
+    { "calculate": "toNumber(replace(datum.Patronage, /,/g, ''))", "as": "Trips" },
+
+    {
+      "joinaggregate": [{ "op": "sum", "field": "Trips", "as": "TotalTrips" }],
+      "groupby": ["Date"]
+    },
+
+    { "calculate": "datum.Trips / datum.TotalTrips", "as": "TripShare" },
+
+    {
+      "calculate": "datum.Mode == 'Metropolitan bus' ? 'METRO BUS' : datum.Mode == 'Metropolitan train' ? 'METRO TRAIN' : datum.Mode == 'Metropolitan tram' ? 'METRO TRAM' : datum.Mode == 'Regional bus' ? 'REGIONAL BUS' : datum.Mode == 'Regional train' ? 'REGIONAL TRAIN' : datum.Mode == 'Regional coach' ? 'REGIONAL COACH' : datum.Mode",
+      "as": "StopModeKey"
+    },
+
+    {
+      "lookup": "StopModeKey",
+      "from": {
+        "data": { "url": "../data/supply_shares.csv", "format": { "type": "csv" } },
+        "key": "MODE",
+        "fields": ["SupplyShare", "StopCount"]
+      }
+    },
+
+    { "filter": "isValid(datum.SupplyShare)" },
+    { "filter": "datum.Mode == ModeSelect" },
+
+    { "calculate": "datum.TripShare - datum.SupplyShare", "as": "Gap" }
+  ],
+
+  "layer": [
+    {
+      "mark": { "type": "area", "opacity": 0.18 },
+      "encoding": {
+        "x": { "field": "Date", "type": "temporal", "title": "Year" },
+        "y": {
+          "field": "TripShare",
+          "type": "quantitative",
+          "title": "Share",
+          "axis": { "format": "%" },
+          "scale": { "zero": false }
+        },
+        "y2": { "field": "SupplyShare" }
+      }
+    },
+
+    {
+      "mark": { "type": "line", "strokeWidth": 2.8 },
+      "encoding": {
+        "x": { "field": "Date", "type": "temporal" },
+        "y": {
+          "field": "TripShare",
+          "type": "quantitative",
+          "axis": { "format": "%" },
+          "scale": { "zero": false }
+        },
+        "tooltip": [
+          { "field": "Mode", "title": "Mode" },
+          { "field": "Date", "type": "temporal", "title": "Month" },
+          { "field": "TripShare", "title": "Use share (trips)", "format": ".1%" },
+          { "field": "SupplyShare", "title": "Supply share (stops)", "format": ".1%" },
+          { "field": "Gap", "title": "Gap (use - supply)", "format": "+.1%" },
+          { "field": "StopCount", "title": "Stops (count)", "format": "," }
+        ]
+      }
+    },
+
+    {
+      "mark": { "type": "line", "strokeDash": [6, 4], "strokeWidth": 2 },
+      "encoding": {
+        "x": { "field": "Date", "type": "temporal" },
+        "y": {
+          "field": "SupplyShare",
+          "type": "quantitative",
+          "scale": { "zero": false }
+        }
+      }
+    }
+  ]
+}

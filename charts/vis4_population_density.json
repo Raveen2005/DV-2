@@ -1,0 +1,91 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "How do transport-connected train stations differ by travel period?",
+    "subtitle": "Stations chosen to match the housing-price suburbs (click legend to highlight)"
+  },
+  "width": 900,
+  "height": 420,
+  "data": {
+    "url": "data/Annual Metropolitician Train STation Petronage.csv"
+  },
+  "params": [
+    {
+      "name": "stationSelect",
+      "select": {
+        "type": "point",
+        "fields": ["Stop_name"],
+        "on": "click",
+        "clear": "dblclick"
+      },
+      "bind": "legend"
+    }
+  ],
+  "transform": [
+    {
+      "filter": "datum.Stop_name == 'Clayton' || datum.Stop_name == 'Box Hill' || datum.Stop_name == 'Footscray' || datum.Stop_name == 'Sunshine' || datum.Stop_name == 'Dandenong' || datum.Stop_name == 'Glen Waverley' || datum.Stop_name == 'Richmond' || datum.Stop_name == 'South Yarra'"
+    },
+    {
+      "fold": [
+        "Pax_weekday",
+        "Pax_Saturday",
+        "Pax_Sunday",
+        "Pax_AM_peak",
+        "Pax_interpeak",
+        "Pax_PM_peak",
+        "Pax_PM_late"
+      ],
+      "as": ["Period", "Passengers"]
+    },
+    {
+      "calculate": "replace(datum.Period, 'Pax_', '')",
+      "as": "PeriodLabel"
+    }
+  ],
+  "mark": {
+    "type": "line",
+    "point": true
+  },
+  "encoding": {
+    "x": {
+      "field": "PeriodLabel",
+      "type": "nominal",
+      "sort": [
+        "weekday",
+        "Saturday",
+        "Sunday",
+        "AM_peak",
+        "interpeak",
+        "PM_peak",
+        "PM_late"
+      ],
+      "axis": { "labelAngle": -20 },
+      "title": "Travel period"
+    },
+    "y": {
+      "field": "Passengers",
+      "type": "quantitative",
+      "title": "Passengers"
+    },
+    "color": {
+      "field": "Stop_name",
+      "type": "nominal",
+      "title": "Station"
+    },
+    "detail": { "field": "Stop_name" },
+    "opacity": {
+      "condition": { "param": "stationSelect", "value": 1 },
+      "value": 0.18
+    },
+    "strokeWidth": {
+      "condition": { "param": "stationSelect", "value": 4 },
+      "value": 1.6
+    },
+    "tooltip": [
+      { "field": "Stop_name", "title": "Station" },
+      { "field": "PeriodLabel", "title": "Period" },
+      { "field": "Passengers", "title": "Passengers", "format": "," },
+      { "field": "Pax_annual", "title": "Annual passengers", "format": "," }
+    ]
+  }
+}

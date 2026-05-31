@@ -1,0 +1,107 @@
+
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Housing Price Growth in Transport-Connected Suburbs",
+    "subtitle": "Select a suburb to highlight its indexed growth path from 2013 to 2023"
+  },
+  "width": 900,
+  "height": 500,
+  "data": {
+    "url": "data/Housing Prices.csv"
+  },
+  "params": [
+    {
+      "name": "SuburbSelect",
+      "value": "CLAYTON",
+      "bind": {
+        "input": "select",
+        "options": [
+          "CLAYTON",
+          "BOX HILL",
+          "FOOTSCRAY",
+          "SUNSHINE",
+          "DANDENONG",
+          "GLEN WAVERLEY",
+          "RICHMOND",
+          "SOUTH YARRA"
+        ],
+        "name": "Select suburb: "
+      }
+    }
+  ],
+  "transform": [
+    {
+      "filter": "datum.Locality == 'CLAYTON' || datum.Locality == 'BOX HILL' || datum.Locality == 'FOOTSCRAY' || datum.Locality == 'SUNSHINE' || datum.Locality == 'DANDENONG' || datum.Locality == 'GLEN WAVERLEY' || datum.Locality == 'RICHMOND' || datum.Locality == 'SOUTH YARRA'"
+    },
+    {
+      "fold": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023"
+      ],
+      "as": ["Year", "Price"]
+    },
+    {
+      "calculate": "toNumber(replace(datum.Price, /[$,]/g, ''))",
+      "as": "HousePrice"
+    },
+    {
+      "calculate": "toNumber(replace(datum['2013'], /[$,]/g, ''))",
+      "as": "BasePrice"
+    },
+    {
+      "calculate": "(datum.HousePrice / datum.BasePrice) * 100",
+      "as": "IndexedGrowth"
+    }
+  ],
+  "mark": {
+    "type": "line",
+    "point": true
+  },
+  "encoding": {
+    "x": {
+      "field": "Year",
+      "type": "ordinal",
+      "title": "Year"
+    },
+    "y": {
+      "field": "IndexedGrowth",
+      "type": "quantitative",
+      "title": "Indexed house price growth, 2013 = 100"
+    },
+    "color": {
+      "field": "Locality",
+      "type": "nominal",
+      "title": "Suburb"
+    },
+    "opacity": {
+      "condition": {
+        "test": "datum.Locality == SuburbSelect",
+        "value": 1
+      },
+      "value": 0.15
+    },
+    "strokeWidth": {
+      "condition": {
+        "test": "datum.Locality == SuburbSelect",
+        "value": 4
+      },
+      "value": 1.5
+    },
+    "tooltip": [
+      {"field": "Locality", "title": "Suburb"},
+      {"field": "Year", "title": "Year"},
+      {"field": "HousePrice", "title": "Median house price", "format": "$,"},
+      {"field": "IndexedGrowth", "title": "Index", "format": ".1f"}
+    ]
+  }
+}

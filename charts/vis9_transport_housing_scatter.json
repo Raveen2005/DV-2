@@ -1,0 +1,77 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Train Demand vs Housing Price",
+    "subtitle": "Transport-connected suburbs compared by station patronage and 2023 median house price"
+  },
+  "width": 850,
+  "height": 500,
+  "data": {
+    "url": "data/Annual Metropolitician Train STation Petronage.csv"
+  },
+  "transform": [
+    {
+      "filter": "datum.Stop_name == 'Clayton' || datum.Stop_name == 'Box Hill' || datum.Stop_name == 'Footscray' || datum.Stop_name == 'Sunshine' || datum.Stop_name == 'Dandenong' || datum.Stop_name == 'Glen Waverley' || datum.Stop_name == 'Richmond' || datum.Stop_name == 'South Yarra'"
+    },
+    {
+      "calculate": "upper(datum.Stop_name)",
+      "as": "SuburbKey"
+    },
+    {
+      "lookup": "SuburbKey",
+      "from": {
+        "data": {
+          "url": "data/Housing Prices.csv"
+        },
+        "key": "Locality",
+        "fields": ["2023"]
+      }
+    },
+    {
+      "calculate": "toNumber(replace(datum['2023'], /[$,]/g, ''))",
+      "as": "HousePrice2023"
+    },
+    {
+      "filter": "isValid(datum.HousePrice2023) && datum.HousePrice2023 > 0"
+    }
+  ],
+  "mark": {
+    "type": "circle",
+    "opacity": 0.8,
+    "stroke": "white",
+    "strokeWidth": 1
+  },
+  "encoding": {
+    "x": {
+      "field": "Pax_annual",
+      "type": "quantitative",
+      "title": "Annual train station passengers"
+    },
+    "y": {
+      "field": "HousePrice2023",
+      "type": "quantitative",
+      "title": "Median house price in 2023",
+      "scale": {
+        "domain": [500000, 2500000]
+      }
+    },
+    "size": {
+      "field": "Pax_weekday",
+      "type": "quantitative",
+      "title": "Average weekday passengers",
+      "scale": {"range": [200, 2000]}
+    },
+    "color": {
+      "field": "HousePrice2023",
+      "type": "quantitative",
+      "title": "2023 house price",
+      "scale": {"scheme": "tealblues"}
+    },
+    "tooltip": [
+      {"field": "Stop_name", "title": "Station / suburb"},
+      {"field": "Pax_annual", "title": "Annual passengers", "format": ","},
+      {"field": "Pax_weekday", "title": "Weekday passengers", "format": ","},
+      {"field": "HousePrice2023", "title": "2023 median house price", "format": "$,"}
+    ]
+  }
+}

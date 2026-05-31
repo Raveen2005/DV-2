@@ -1,0 +1,171 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Melbourne Public Transport Patronage Recovery",
+    "subtitle": "Monthly trips by mode, with COVID and recovery periods highlighted"
+  },
+  "width": 900,
+  "height": 450,
+
+  "layer": [
+    {
+      "data": {
+        "values": [
+          {"start": "2018-01-01", "end": "2020-03-01", "Era": "Pre-COVID"},
+          {"start": "2020-03-01", "end": "2021-12-01", "Era": "COVID disruption"},
+          {"start": "2022-01-01", "end": "2023-12-01", "Era": "Recovery phase"},
+          {"start": "2024-01-01", "end": "2026-02-01", "Era": "New normal"}
+        ]
+      },
+      "mark": {
+        "type": "rect",
+        "opacity": 0.16
+      },
+      "encoding": {
+        "x": {"field": "start", "type": "temporal"},
+        "x2": {"field": "end"},
+        "color": {
+          "field": "Era",
+          "type": "nominal",
+          "scale": {
+            "domain": ["Pre-COVID", "COVID disruption", "Recovery phase", "New normal"],
+            "range": ["#f6d365", "#f7a6a6", "#9ad3bc", "#a6c8ff"]
+          },
+          "legend": {"title": "Period"}
+        }
+      }
+    },
+
+    {
+      "data": {
+        "url": "data/Monthly public transport patronage by mode.csv"
+      },
+      "transform": [
+        {
+          "calculate": "datetime(datum.Year, datum.Month - 1, 1)",
+          "as": "Date"
+        },
+        {
+          "fold": [
+            "Metropolitan train",
+            "Metropolitan tram",
+            "Metropolitan bus",
+            "Regional train",
+            "Regional coach",
+            "Regional bus"
+          ],
+          "as": ["Mode", "Patronage"]
+        },
+        {
+          "calculate": "toNumber(replace(datum.Patronage, /,/g, ''))",
+          "as": "Trips"
+        }
+      ],
+      "mark": {
+        "type": "line",
+        "point": false,
+        "interpolate": "monotone",
+        "strokeWidth": 2.5
+      },
+      "encoding": {
+        "x": {
+          "field": "Date",
+          "type": "temporal",
+          "title": "Year"
+        },
+        "y": {
+          "field": "Trips",
+          "type": "quantitative",
+          "title": "Passenger Trips"
+        },
+        "color": {
+          "field": "Mode",
+          "type": "nominal",
+          "title": "Transport Mode",
+          "scale": {
+            "domain": [
+              "Metropolitan train",
+              "Metropolitan tram",
+              "Metropolitan bus",
+              "Regional train",
+              "Regional coach",
+              "Regional bus"
+            ],
+            "range": [
+              "#E4572E",
+              "#4C78A8",
+              "#54A24B",
+              "#F2CF5B",
+              "#B279A2",
+              "#72B7B2"
+            ]
+          }
+        },
+        "tooltip": [
+          {"field": "Date", "type": "temporal", "title": "Month"},
+          {"field": "Mode", "title": "Mode"},
+          {"field": "Trips", "type": "quantitative", "title": "Trips", "format": ","}
+        ]
+      }
+    },
+
+    {
+      "data": {
+        "values": [
+          {
+            "Date": "2020-04-01",
+            "Trips": 22000000,
+            "Label": "COVID restrictions caused a sharp fall in patronage"
+          },
+          {
+            "Date": "2022-02-01",
+            "Trips": 13500000,
+            "Label": "Patronage begins recovering after major lockdown periods"
+          },
+          {
+            "Date": "2024-04-01",
+            "Trips": 18500000,
+            "Label": "Usage stabilises below pre-COVID peaks"
+          }
+        ]
+      },
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 8,
+        "dy": -8,
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "color": "#333"
+      },
+      "encoding": {
+        "x": {"field": "Date", "type": "temporal"},
+        "y": {"field": "Trips", "type": "quantitative"},
+        "text": {"field": "Label"}
+      }
+    },
+
+    {
+      "data": {
+        "values": [
+          {"Date": "2020-03-01"},
+          {"Date": "2022-01-01"}
+        ]
+      },
+      "mark": {
+        "type": "rule",
+        "strokeDash": [4, 4],
+        "color": "#555"
+      },
+      "encoding": {
+        "x": {"field": "Date", "type": "temporal"}
+      }
+    }
+  ],
+
+  "resolve": {
+    "scale": {
+      "color": "independent"
+    }
+  }
+}

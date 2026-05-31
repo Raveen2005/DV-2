@@ -1,0 +1,55 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Weekday vs Weekend Demand at Melbourne Train Stations",
+    "subtitle": "Top 30 stations by annual entries"
+  },
+  "width": 850,
+  "height": 520,
+  "data": {
+    "url": "data/Annual Metropolitician Train STation Petronage.csv"
+  },
+  "transform": [
+    {
+      "window": [{"op": "rank", "as": "Rank"}],
+      "sort": [{"field": "Pax_annual", "order": "descending"}]
+    },
+    {"filter": "datum.Rank <= 30"},
+    {
+      "fold": ["Pax_weekday", "Pax_Saturday", "Pax_Sunday"],
+      "as": ["DayType", "Passengers"]
+    }
+  ],
+  "mark": {
+    "type": "bar",
+    "cornerRadiusEnd": 3
+  },
+  "encoding": {
+    "y": {
+      "field": "Stop_name",
+      "type": "nominal",
+      "sort": "-x",
+      "title": "Station"
+    },
+    "x": {
+      "field": "Passengers",
+      "type": "quantitative",
+      "title": "Average passengers"
+    },
+    "color": {
+      "field": "DayType",
+      "type": "nominal",
+      "title": "Day type",
+      "scale": {
+        "domain": ["Pax_weekday", "Pax_Saturday", "Pax_Sunday"],
+        "range": ["#4C78A8", "#F28E2B", "#E15759"]
+      }
+    },
+    "tooltip": [
+      {"field": "Stop_name", "title": "Station"},
+      {"field": "DayType", "title": "Day type"},
+      {"field": "Passengers", "title": "Passengers", "format": ","},
+      {"field": "Pax_annual", "title": "Annual passengers", "format": ","}
+    ]
+  }
+}

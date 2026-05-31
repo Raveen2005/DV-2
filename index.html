@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Melbourne Public Transport Analysis</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
+  <style>
+    /* ====== BASE VARIABLES & THEME ====== */
+    :root {
+      --page-max: 1100px; /* Slightly wider for better text distribution */
+      --card-border: #e9e9e9;
+      --muted: #94a3b8;
+      --bg: #ffffff;
+      --accent: #7dd3fc;
+      --accent-bg: rgba(125, 211, 252, 0.12);
+    }
+    
+    body {
+      margin: 0;
+      padding: 36px 20px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      background:
+        radial-gradient(1100px 700px at 18% 10%, rgba(125,211,252,0.15) 0%, rgba(125,211,252,0.00) 55%),
+        radial-gradient(900px 650px at 78% 18%, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.00) 60%),
+        radial-gradient(1200px 900px at 50% 92%, rgba(148,163,184,0.06) 0%, rgba(148,163,184,0.00) 70%),
+        linear-gradient(180deg, #020617 0%, #0b1220 55%, #0f172a 100%);
+      background-attachment: fixed;
+    }
+
+    .page {
+      width: 100%;
+      max-width: var(--page-max);
+      margin: 0 auto;
+    }
+
+    /* ====== TYPOGRAPHY ====== */
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 60px;
+      margin: 0 0 18px 0;
+      line-height: 1.1;
+      letter-spacing: -0.8px;
+      color: #f9fafb;
+      text-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+
+    h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 42px;
+      margin: 56px auto 20px;
+      line-height: 1.1;
+      letter-spacing: -0.4px;
+      color: #f9fafb;
+      text-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 100%;
+    }
+
+    /* ====== HERO SECTION ====== */
+    .hero {
+      border-radius: 28px;
+      padding: 48px 50px 40px;
+      margin: 0 0 32px 0;
+      background:
+        radial-gradient(1200px 700px at 85% 10%, rgba(17,24,39,0.0) 0%, rgba(17,24,39,0.55) 45%, rgba(17,24,39,0.85) 75%),
+        linear-gradient(135deg, #0b1220 0%, #111827 100%);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      text-align: center;
+      transition: all 300ms ease;
+    }
+
+    .hero.is-spotlight {
+      box-shadow: 0 26px 80px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.15);
+      border-color: rgba(125,211,252,0.25);
+      transform: translateY(-2px);
+    }
+
+    .hero-kicker {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .hero-title .accent { color: var(--accent); }
+
+    .hero-sub {
+      max-width: 850px;
+      font-size: 19px;
+      line-height: 1.65;
+      color: rgba(249,250,251,0.85);
+      margin: 0 auto 32px auto;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      max-width: 1000px;
+      margin: 16px auto 0 auto;
+    }
+
+    .hero-card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 22px 20px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      text-align: left;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    
+    .hero-card:hover {
+      background: rgba(255,255,255,0.07);
+      transform: translateY(-3px);
+    }
+
+    .hero-card .tag {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .hero-card .h {
+      font-size: 21px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      color: #fff;
+    }
+
+    .hero-card .p {
+      margin: 0;
+      color: rgba(249,250,251,0.75);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .hero-card a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: 14px;
+    }
+    
+    .hero-card a:hover { text-decoration: underline; }
+
+    /* ====== DARK CARDS & SWITCHERS ====== */
+    .card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      background: rgba(255,255,255,0.04);
+      padding: 24px;
+      margin: 16px 0 40px;
+      box-shadow: 0 18px 56px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .dark-card {
+      background:
+        radial-gradient(900px 600px at 85% 10%, rgba(17,24,39,0.00) 0%, rgba(17,24,39,0.55) 45%, rgba(17,24,39,0.85) 75%),
+        linear-gradient(135deg, #0b1220 0%, #111827 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .switch-header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      min-height: 48px;
+    }
+
+    .switch-title {
+      font-weight: 800;
+      font-size: 22px;
+      text-align: center;
+      color: #fff;
+    }
+
+    .switch-controls {
+      position: absolute;
+      right: 0;
+      top: 0;
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+      color: #f9fafb;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+    }
+    
+    .btn:hover { background: rgba(255,255,255,0.18); transform: scale(1.05); }
+
+    /* ====== LAYOUT GRIDS ====== */
+    .switch-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) 440px; /* Slightly wider text area for balance */
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .switch-grid-leftstory {
+      display: grid;
+      grid-template-columns: 440px minmax(0, 1.2fr);
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 980px){
+      .switch-grid, .switch-grid-leftstory { grid-template-columns: 1fr; }
+      .switch-controls { position: relative; justify-content: center; width: 100%; margin-top: 10px; }
+      .switch-header { flex-direction: column; }
+    }
+
+    /* ====== CHART FRAMES (FIXING THE WHITE SPACE) ====== */
+    .chart-slot {
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-frame {
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 18px;
+      background: #fafafa; /* Soft off-white to reduce harsh contrast */
+      overflow: hidden;
+      padding: 16px;
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      
+      /* THE FIX: Center the Vega Canvas perfectly inside the frame */
+      justify-content: center;
+      align-items: center;
+      box-shadow: inset 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    /* Subtle drafting background to make the white space look like a deliberate canvas */
+    .chart-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .chart-frame > * {
+      position: relative;
+      z-index: 1;
+      max-width: 100%;
+    }
+
+    /* ====== STORY SLOTS (ENHANCED TYPOGRAPHY) ====== */
+    .story-slot {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 24px;
+      background: rgba(255,255,255,0.03);
+      min-width: 0;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+      color: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: auto;
+      scrollbar-gutter: stable;
+    }
+
+    .story-kicker {
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .story-head {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 40px;
+      line-height: 1.05;
+      margin: 0 0 16px 0;
+      color: #fff;
+    }
+
+    .story-body {
+      color: rgba(255,255,255,0.85);
+      font-size: 15.5px;
+      line-height: 1.65;
+      margin: 0;
+      text-align: justify; /* Gives it a highly professional, academic alignment */
+    }
+    
+    .story-body p { margin-top: 0; margin-bottom: 16px; }
+
+    /* Analytical Insight Box - Elevates the storytelling */
+    .insight-box {
+      margin-top: 20px;
+      margin-bottom: 10px;
+      padding: 16px 18px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-bg);
+      border-radius: 0 8px 8px 0;
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: #e0f2fe;
+    }
+    
+    .insight-box strong {
+      display: block;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      margin-bottom: 6px;
+    }
+
+    .source {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .source a { color: var(--accent); text-decoration: none; }
+    .source a:hover { text-decoration: underline; }
+
+    /* View Switcher Logic */
+    .view { display: block; }
+    .view:not(.active) {
+      height: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .view.active {
+      height: auto;
+      opacity: 1;
+      pointer-events: auto;
+      animation: fade-in 0.4s ease forwards;
+    }
+    
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Force Vega to respect bounds without distorting */
+    .vega-embed { display: flex; justify-content: center; align-items: center; }
+    .chart-slot svg, .chart-slot canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    /* ====== FOOTER ====== */
+    footer.site-footer {
+      margin: 64px auto 24px;
+      padding: 24px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      color: rgba(229,231,235,0.7);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+    footer.site-footer .footer-inner { max-width: var(--page-max); margin: 0 auto; }
+    footer.site-footer a { color: var(--accent); text-decoration: none; font-weight: 700; }
+    footer.site-footer a:hover { text-decoration: underline; }
+    footer.site-footer .footer-row {
+      display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: center; align-items: center; margin-top: 10px;
+    }
+    footer.site-footer .dot { opacity: 0.4; }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+  <header class="hero">
+    <div class="hero-kicker">MELBOURNE PUBLIC TRANSPORT: AN ANALYTICAL OVERVIEW</div>
+    <h1 class="hero-title">Melbourne <span class="accent">Public Transport</span></h1>
+    <p class="hero-sub">
+      This analytical narrative examines the spatial distribution of Melbourne’s public transport infrastructure, evaluating network density, pandemic-induced demand shifts, and the correlation between transit connectivity and suburban housing valuations.
+    </p>
+
+    <div class="hero-grid">
+      <div class="hero-card">
+        <div class="tag">GEOGRAPHY</div>
+        <div class="h">Coverage & hotspots</div>
+        <p class="p">An examination of stop distributions across varying transit modes, highlighting spatial concentrations.</p>
+        <a href="#stops-hotspots">Jump to maps →</a>
+      </div>
+      <div class="hero-card">
+        <div class="tag">SHOCK & RECOVERY</div>
+        <div class="h">COVID impact</div>
+        <p class="p">A temporal analysis of patronage trends, illustrating structural disruptions and recovery phases.</p>
+        <a href="#covid">Jump to COVID →</a>
+      </div>
+      <div class="hero-card">
+        <div class="tag">NETWORK</div>
+        <div class="h">Composition & demand</div>
+        <p class="p">An evaluation of infrastructural composition contrasted with passenger demand distribution.</p>
+        <a href="#composition">Jump to network →</a>
+      </div>
+      <div class="hero-card">
+        <div class="tag">VALUE</div>
+        <div class="h">Transport & housing</div>
+        <p class="p">An investigation into the relationship between transit accessibility and median property valuations.</p>
+        <a href="#housing">Jump to housing →</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========= 1) Stops vs Hotspots ========= -->
+  <h2 id="stops-hotspots">Stops and hotspots</h2>
+
+  <div class="card dark-card">
+    <div class="switch-header">
+      <div class="switch-title" id="switchTitle">Stops across Melbourne by mode</div>
+      <div class="switch-controls">
+        <button class="btn" id="prevBtn" aria-label="Previous view">‹</button>
+        <button class="btn" id="nextBtn" aria-label="Next view">›</button>
+      </div>
+    </div>
+
+    <div class="switch-grid">
+      <div class="chart-slot">
+        <div id="viewStops" class="view active"><div class="chart-frame"><div id="vis1"></div></div></div>
+        <div id="viewHotspots" class="view"><div class="chart-frame"><div id="vis5"></div></div></div>
+      </div>
+      <aside class="story-slot">
+        <div class="story-kicker" id="storyKicker">MAP VIEW 01</div>
+        <h3 class="story-head" id="storyHead">Coverage</h3>
+        <div class="story-body" id="storyBody"></div>
+        <div class="source" id="storySource">
+          <b>Sources:</b> <a href="https://opendata.transport.vic.gov.au/dataset/public-transport-lines-and-stops" target="_blank" rel="noopener">Transport Victoria</a>, <a href="https://www.abs.gov.au" target="_blank" rel="noopener">ABS ASGS Ed.3</a>.
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ========= 2) COVID impact switcher ========= -->
+  <h2 id="covid">COVID impact on public transport usage</h2>
+
+  <div class="card dark-card">
+    <div class="switch-header">
+      <div class="switch-title" id="covidSwitchTitle">Monthly patronage trend (by mode)</div>
+      <div class="switch-controls">
+        <button class="btn" id="covidPrevBtn" aria-label="Previous view">‹</button>
+        <button class="btn" id="covidNextBtn" aria-label="Next view">›</button>
+      </div>
+    </div>
+
+    <div class="switch-grid">
+      <div class="chart-slot">
+        <div id="covidViewTrend" class="view active"><div class="chart-frame"><div id="vis2"></div></div></div>
+        <div id="covidViewHeatmap" class="view"><div class="chart-frame"><div id="vis8"></div></div></div>
+      </div>
+      <aside class="story-slot">
+        <div class="story-kicker" id="covidStoryKicker">COVID VIEW 01</div>
+        <h3 class="story-head" id="covidStoryHead">Shock → recovery</h3>
+        <div class="story-body" id="covidStoryBody"></div>
+        <div class="source" id="covidStorySource">
+          <b>Source:</b> <a href="https://www.ptv.vic.gov.au/about-ptv-and-the-network/ptv-performance/" target="_blank" rel="noopener">PTV performance data</a>.
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ========= 3) Composition ↔ Use vs supply ========= -->
+  <h2 id="composition">What makes up Melbourne’s public transport network?</h2>
+
+  <div class="card dark-card">
+    <div class="switch-header">
+      <div class="switch-title" id="compSwitchTitle">Network composition (stops)</div>
+      <div class="switch-controls">
+        <button class="btn" id="compPrevBtn" aria-label="Previous view">‹</button>
+        <button class="btn" id="compNextBtn" aria-label="Next view">›</button>
+      </div>
+    </div>
+
+    <div class="switch-grid-leftstory">
+      <aside class="story-slot">
+        <div class="story-kicker" id="compStoryKicker">COMPOSITION VIEW 01</div>
+        <h3 class="story-head" id="compStoryHead">Built form</h3>
+        <div class="story-body" id="compStoryBody"></div>
+        <div class="source" id="compStorySource">
+          <b>Sources:</b> <a href="https://opendata.transport.vic.gov.au" target="_blank" rel="noopener">Transport Victoria Data</a>.
+        </div>
+      </aside>
+      <div class="chart-slot">
+        <div id="compViewStopsShare" class="view active"><div class="chart-frame"><div id="vis3"></div></div></div>
+        <div id="compViewUseVsSupply" class="view"><div class="chart-frame"><div id="vis10"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========= 4) Station demand patterns ========= -->
+  <h2>Train station demand patterns</h2>
+
+  <div class="card dark-card">
+    <div class="switch-header">
+      <div class="switch-title" id="stationSwitchTitle">Travel-period profile (selected stations)</div>
+      <div class="switch-controls">
+        <button class="btn" id="stationPrevBtn" aria-label="Previous view">▲</button>
+        <button class="btn" id="stationNextBtn" aria-label="Next view">▼</button>
+      </div>
+    </div>
+
+    <div class="switch-grid">
+      <div class="chart-slot">
+        <div id="stationViewProfile" class="view active"><div class="chart-frame"><div id="vis4"></div></div></div>
+        <div id="stationViewSpread" class="view"><div class="chart-frame"><div id="vis7"></div></div></div>
+      </div>
+      <aside class="story-slot">
+        <div class="story-kicker" id="stationStoryKicker">STATION VIEW 01</div>
+        <h3 class="story-head" id="stationStoryHead">Daily shape</h3>
+        <div class="story-body" id="stationStoryBody"></div>
+        <div class="source" id="stationStorySource">
+          <b>Source:</b> <a href="https://discover.data.vic.gov.au" target="_blank" rel="noopener">Data VIC</a> (CSV).
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ========= 5) Housing + transport value ========= -->
+  <h2 id="housing">Housing and transport connection</h2>
+
+  <div class="card dark-card">
+    <div class="switch-header">
+      <div class="switch-title" id="houseSwitchTitle">Demand vs price (snapshot)</div>
+      <div class="switch-controls">
+        <button class="btn" id="housePrevBtn" aria-label="Previous view">‹</button>
+        <button class="btn" id="houseNextBtn" aria-label="Next view">›</button>
+      </div>
+    </div>
+
+    <div class="switch-grid">
+      <div class="chart-slot">
+        <div id="houseViewScatter" class="view active"><div class="chart-frame"><div id="vis9"></div></div></div>
+        <div id="houseViewGrowth" class="view"><div class="chart-frame"><div id="vis6"></div></div></div>
+      </div>
+      <aside class="story-slot">
+        <div class="story-kicker" id="houseStoryKicker">HOUSING VIEW 01</div>
+        <h3 class="story-head" id="houseStoryHead">Demand vs price</h3>
+        <div class="story-body" id="houseStoryBody"></div>
+        <div class="source" id="houseStorySource">
+          <b>Sources:</b> Housing prices by suburb, <a href="https://discover.data.vic.gov.au" target="_blank" rel="noopener">Data VIC</a>.
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <h2 id="conclusion">Conclusion: The Future of the Network</h2>
+
+  <div class="card dark-card" style="padding: 40px; text-align: center; max-width: 850px; margin-left: auto; margin-right: auto;">
+    <h3 class="story-head" style="font-size: 32px; margin-bottom: 20px;">Synthesizing the Data</h3>
+    <div class="story-body" style="text-align: center; font-size: 17px; line-height: 1.7;">
+      <p>
+        Melbourne’s public transport network is in a state of structural transition. The spatial data reveals a system heavily reliant on buses for broad geographic reach, yet fundamentally anchored by high-capacity, radial train corridors. However, the temporal shock of the pandemic exposed vulnerabilities in this traditional commuter-heavy model.
+      </p>
+      <p>
+        As patronage stabilizes at a new, lower baseline, and weekend utilization remains robust at key destination stations, the data suggests a necessary pivot in urban planning. The future of Melbourne's network relies not just on expanding the physical footprint, but on dynamically aligning service frequency with evolving behavioral patterns, and recognizing that transit connectivity is a foundational—though complex—driver of suburban equity and value.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // To ensure the charts fill the centered container elegantly
+    const EMBED_OPTS = { actions: false, renderer: "svg" };
+    const embedCache = new Map();
+
+    function ensureEmbed(selector, specPath){
+      if (embedCache.has(selector)) return embedCache.get(selector);
+      const p = vegaEmbed(selector, specPath, EMBED_OPTS)
+        .then(res => { try { res.view.resize().run(); } catch(e){} return res; })
+        .catch(err => { console.error(err); return null; });
+      embedCache.set(selector, p);
+      return p;
+    }
+
+    ensureEmbed("#vis1",  "charts/vis1_stops_map.json");
+    ensureEmbed("#vis5",  "charts/vis5_stop_density_heatmap.json");
+
+    ensureEmbed("#vis2",  "charts/vis2_patronage_line.json");
+    ensureEmbed("#vis8",  "charts/vis8_monthly_heatmap.json");
+
+    ensureEmbed("#vis3",  "charts/vis3_mode_small_multiples.json");
+    ensureEmbed("#vis10", "charts/vis10_supply_vs_use_share.json");
+
+    ensureEmbed("#vis4",  "charts/vis4_population_density.json");
+    ensureEmbed("#vis7",  "charts/vis7_weekday_weekend_scatter.json");
+
+    ensureEmbed("#vis9",  "charts/vis9_transport_housing_scatter.json");
+    ensureEmbed("#vis6",  "charts/vis6_patronage_forecast.json");
+
+    // ========= View Narratives (Enriched with Analytical Insights) =========
+    const views = [
+      {
+        id: "viewStops",
+        title: "Stops across Melbourne by mode",
+        kicker: "MAP VIEW 01",
+        head: "Coverage",
+        body: `
+          <p>This visualization delineates the network's spatial footprint across the metropolitan region. Metropolitan bus services exhibit a broad, decentralized distribution, acting as the primary infill mechanism across varied suburbs. Conversely, tram networks are densely localized within the inner city and central business district.</p>
+          <p>The train network demonstrates a distinct corridor-based topology, serving as radial transport anchors rather than providing continuous spatial coverage.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            While broad geographic coverage exists via the bus network, sheer infrastructure spread does not equate to equivalent service quality. The reliance on radial train lines creates structural dependencies for suburban commuters heading to the CBD.
+          </div>
+        `
+      },
+      {
+        id: "viewHotspots",
+        title: "Stop density hotspots",
+        kicker: "MAP VIEW 02",
+        head: "Concentration",
+        body: `
+          <p>By transitioning from individual stops to spatial density, this visualization identifies areas of peak infrastructural concentration. The most pronounced hotspots remain centralized around the inner city and primary intermodal transit hubs.</p>
+          <p>In contrast, the outer suburban periphery exhibits significant fragmentation, correlating with longer pedestrian access times and reduced transfer viability.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            Density serves as a more accurate proxy for true accessibility than aggregate footprint. The severe drop-off in density outside the inner ring highlights a critical vulnerability in the “last mile” connectivity for outer-suburban residents.
+          </div>
+        `,
+        ensure: () => ensureEmbed("#vis5", "charts/vis5_stop_density_heatmap.json")
+      }
+    ];
+
+    const covidViews = [
+      {
+        id: "covidViewTrend",
+        title: "Monthly patronage trend (by mode)",
+        kicker: "COVID VIEW 01",
+        head: "Shock → recovery",
+        body: `
+          <p>The onset of the pandemic induced a severe and immediate contraction in transit patronage. Rather than a linear return to baseline, the subsequent recovery phase progressed unevenly across different transit modes, aligning precisely with imposed lockdown protocols.</p>
+          <p>Notably, post-2022 patronage has established a revised equilibrium that generally remains below pre-pandemic peaks, reflecting a structural shift in transit reliance.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            This permanent stabilization below historical peaks underscores the institutionalization of flexible working arrangements. The uneven recovery across modes requires strategic re-evaluation of capacity planning, moving away from historic commuter-peak models.
+          </div>
+        `
+      },
+      {
+        id: "covidViewHeatmap",
+        title: "Monthly seasonality + disruption",
+        kicker: "COVID VIEW 02",
+        head: "Seasonality revealed",
+        body: `
+          <p>This temporal heatmap aggregates long-term data to reveal inherent network seasonality and the sheer scale of pandemic disruptions. Under typical conditions, distinct vertical alignments indicate established seasonal usage rhythms.</p>
+          <p>The 2020–2021 disruption effectively erased these patterns, yielding uniformly suppressed demand across consecutive months.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            The gradual reappearance of these seasonal markers post-2022 confirms behavioral normalization. However, the varying intensity of these 'hotspots' compared to 2019 data indicates that while seasonal patterns have returned, absolute volume has permanently shifted.
+          </div>
+        `,
+        ensure: () => ensureEmbed("#vis8", "charts/vis8_monthly_heatmap.json")
+      }
+    ];
+
+    const compViews = [
+      {
+        id: "compViewStopsShare",
+        title: "Network composition (stops)",
+        kicker: "COMPOSITION VIEW 01",
+        head: "Built form",
+        body: `
+          <p>This perspective quantifies the physical composition of the network based purely on stop infrastructure. Metropolitan bus services account for the vast majority of physical access points, presenting the widest-reaching infrastructural layer.</p>
+          <p>Tram stops demonstrate high density over a restricted footprint, while train stations represent a comparatively minimal share of total infrastructure despite serving as high-capacity corridors.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            This built-form composition establishes a vital baseline. A high infrastructure share (like buses) typically suggests high maintenance overhead, which must be carefully balanced against actual utilization and passenger throughput to ensure network efficiency.
+          </div>
+        `
+      },
+      {
+        id: "compViewUseVsSupply",
+        title: "Use vs supply (share over time)",
+        kicker: "COMPOSITION VIEW 02",
+        head: "Mismatch",
+        body: `
+          <p>This analysis contrasts the underlying infrastructural supply with functional network utilization. A positive divergence, where passenger share exceeds infrastructure share, indicates disproportionately high demand and potential capacity constraints for that specific mode.</p>
+          <p>Conversely, a negative divergence highlights extensive physical coverage yielding lower per-stop utilization.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            Identifying utilization mismatches is crucial for strategic resource allocation. Modes operating consistently above their infrastructure share are prime targets for frequency upgrades or capital investment to alleviate systemic crowding.
+          </div>
+        `
+      }
+    ];
+
+    const houseViews = [
+      {
+        id: "houseViewScatter",
+        title: "Demand vs price (snapshot)",
+        kicker: "HOUSING VIEW 01",
+        head: "Demand vs price",
+        body: `
+          <p>This scatter plot explores the intersection of transit accessibility and property valuation by mapping annual station patronage against 2023 median house prices. While an idealized model might suggest a linear correlation, the empirical distribution reveals significant variance.</p>
+          <p>Numerous high-demand stations correspond with mid-tier property values, whereas select premium suburbs require only moderate localized patronage.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            While the "transit premium" is a documented phenomenon in real estate, this variance confirms it is not an isolated driver of value. Urban planning constraints, school zoning, and socio-economic demographics heavily modify the financial impact of connectivity.
+          </div>
+        `,
+        ensure: () => ensureEmbed("#vis9", "charts/vis9_transport_housing_scatter.json")
+      },
+      {
+        id: "houseViewGrowth",
+        title: "Price growth over time (indexed)",
+        kicker: "HOUSING VIEW 02",
+        head: "Growth path",
+        body: `
+          <p>Tracking relative price trajectories from a 2013 baseline standardizes historical valuation advantages, enabling a direct comparison of growth rates across transport-connected suburbs. The paths demonstrate that property appreciation is neither uniform nor strictly synchronized.</p>
+          <p>Distinct inflection points reveal varied market responses and localized demand surges across different corridors.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            Transit access provides a resilient foundation that protects against severe market downturns, but aggressive growth multipliers are predominantly dictated by localized gentrification and external civic investments rather than transit utility alone.
+          </div>
+        `,
+        ensure: () => ensureEmbed("#vis6", "charts/vis6_patronage_forecast.json")
+      }
+    ];
+
+    const stationViews = [
+      {
+        id: "stationViewProfile",
+        title: "Travel-period profile (selected stations)",
+        kicker: "STATION VIEW 01",
+        head: "Daily shape",
+        body: `
+          <p>This visualization profiles dynamic passenger demand across distinct temporal periods, including weekdays, weekends, and peak commuter hours. The data cleanly segregates major commuter hubs from versatile destination stations.</p>
+          <p>Commuter hubs exhibit aggressive utilization spikes during typical workday periods, while destination stations maintain robust, stabilized patronage throughout weekend intervals.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            Recognizing these distinct temporal profiles is essential for dynamic scheduling. Treating all stations homogeneously leads to operational inefficiency; timetable flexibility must reflect these localized behavioral signatures to maximize resource utility.
+          </div>
+        `,
+        ensure: () => ensureEmbed("#vis4", "charts/vis4_population_density.json")
+      },
+      {
+        id: "stationViewSpread",
+        title: "Weekday vs weekend demand",
+        kicker: "STATION VIEW 02",
+        head: "Spread of demand",
+        body: `
+          <p>By disaggregating high-volume stations into their respective weekday, Saturday, and Sunday components, a comprehensive overview of weekly demand distribution emerges.</p>
+          <p>While weekday commuting naturally dominates aggregate volume for the majority of these hubs, the proportional share of weekend traffic exhibits significant variance depending on the station's surrounding urban context.</p>
+          <div class="insight-box">
+            <strong>Analytical Insight</strong>
+            Stations with sustained weekend demand represent highly integrated civic nodes rather than mere transit corridors. These environments present prime opportunities for transit-oriented commercial development and extended municipal investment.
+          </div>
+        `,
+        ensure: () => ensureEmbed("#vis7", "charts/vis7_weekday_weekend_scatter.json")
+      }
+    ];
+
+    // Core Switcher Logic Abstraction
+    function applyView(arr, idx, titleEl, kickerEl, headEl, bodyEl) {
+      for (const v of arr) document.getElementById(v.id).classList.remove("active");
+      const current = arr[idx];
+      document.getElementById(current.id).classList.add("active");
+      if (current.ensure) current.ensure();
+      setTimeout(syncSectionHeights, 50);
+      setTimeout(syncSectionHeights, 250);
+      document.getElementById(titleEl).textContent = current.title;
+      document.getElementById(kickerEl).textContent = current.kicker;
+      document.getElementById(headEl).textContent = current.head;
+      document.getElementById(bodyEl).innerHTML = current.body;
+      syncSectionHeights();
+    }
+
+    let idx = 0;
+    document.getElementById("prevBtn").addEventListener("click", () => { idx = (idx - 1 + views.length) % views.length; applyView(views, idx, "switchTitle", "storyKicker", "storyHead", "storyBody"); });
+    document.getElementById("nextBtn").addEventListener("click", () => { idx = (idx + 1) % views.length; applyView(views, idx, "switchTitle", "storyKicker", "storyHead", "storyBody"); });
+    applyView(views, 0, "switchTitle", "storyKicker", "storyHead", "storyBody");
+
+    let covidIdx = 0;
+    document.getElementById("covidPrevBtn").addEventListener("click", () => { covidIdx = (covidIdx - 1 + covidViews.length) % covidViews.length; applyView(covidViews, covidIdx, "covidSwitchTitle", "covidStoryKicker", "covidStoryHead", "covidStoryBody"); });
+    document.getElementById("covidNextBtn").addEventListener("click", () => { covidIdx = (covidIdx + 1) % covidViews.length; applyView(covidViews, covidIdx, "covidSwitchTitle", "covidStoryKicker", "covidStoryHead", "covidStoryBody"); });
+    applyView(covidViews, 0, "covidSwitchTitle", "covidStoryKicker", "covidStoryHead", "covidStoryBody");
+
+    let compIdx = 0;
+    document.getElementById("compPrevBtn").addEventListener("click", () => { compIdx = (compIdx - 1 + compViews.length) % compViews.length; applyView(compViews, compIdx, "compSwitchTitle", "compStoryKicker", "compStoryHead", "compStoryBody"); });
+    document.getElementById("compNextBtn").addEventListener("click", () => { compIdx = (compIdx + 1) % compViews.length; applyView(compViews, compIdx, "compSwitchTitle", "compStoryKicker", "compStoryHead", "compStoryBody"); });
+    applyView(compViews, 0, "compSwitchTitle", "compStoryKicker", "compStoryHead", "compStoryBody");
+
+    let houseIdx = 0;
+    document.getElementById("housePrevBtn").addEventListener("click", () => { houseIdx = (houseIdx - 1 + houseViews.length) % houseViews.length; applyView(houseViews, houseIdx, "houseSwitchTitle", "houseStoryKicker", "houseStoryHead", "houseStoryBody"); });
+    document.getElementById("houseNextBtn").addEventListener("click", () => { houseIdx = (houseIdx + 1) % houseViews.length; applyView(houseViews, houseIdx, "houseSwitchTitle", "houseStoryKicker", "houseStoryHead", "houseStoryBody"); });
+    applyView(houseViews, 0, "houseSwitchTitle", "houseStoryKicker", "houseStoryHead", "houseStoryBody");
+
+    let stationIdx = 0;
+    document.getElementById("stationPrevBtn").addEventListener("click", () => { stationIdx = (stationIdx - 1 + stationViews.length) % stationViews.length; applyView(stationViews, stationIdx, "stationSwitchTitle", "stationStoryKicker", "stationStoryHead", "stationStoryBody"); });
+    document.getElementById("stationNextBtn").addEventListener("click", () => { stationIdx = (stationIdx + 1) % stationViews.length; applyView(stationViews, stationIdx, "stationSwitchTitle", "stationStoryKicker", "stationStoryHead", "stationStoryBody"); });
+    applyView(stationViews, 0, "stationSwitchTitle", "stationStoryKicker", "stationStoryHead", "stationStoryBody");
+
+    // Layout Syncer
+    function syncSectionHeights() {
+      const cards = document.querySelectorAll('.card.dark-card');
+      cards.forEach(card => {
+        const grid = card.querySelector('.switch-grid, .switch-grid-leftstory');
+        if (!grid) return;
+        const activeView = grid.querySelector('.view.active');
+        const chartFrame = activeView ? activeView.querySelector('.chart-frame') : grid.querySelector('.chart-frame');
+        const story = grid.querySelector('.story-slot');
+        if (!chartFrame || !story) return;
+        const h = chartFrame.getBoundingClientRect().height;
+        if (h && h > 100) { story.style.height = `${h}px`; }
+      });
+    }
+
+    const _syncLater = () => requestAnimationFrame(() => requestAnimationFrame(syncSectionHeights));
+    window.addEventListener('resize', _syncLater);
+    setTimeout(_syncLater, 800);
+
+    // Hero Spotlight Effect
+    (function heroSpotlight(){
+      const hero = document.querySelector('.hero');
+      if (!hero) return;
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries[0] && entries[0].isIntersecting && entries[0].intersectionRatio >= 0.45) hero.classList.add('is-spotlight');
+          else hero.classList.remove('is-spotlight');
+        }, { threshold: [0.0, 0.45, 1.0] }
+      );
+      io.observe(hero);
+      if (window.scrollY < 40) hero.classList.add('is-spotlight');
+    })();
+  </script>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div><b>Melbourne Public Transport</b> — interactive analytical report (FIT2179 DV2).</div>
+      <div class="footer-row">
+        <span><b>Author:</b> Raveen Pieris (2026)</span><span class="dot">•</span>
+        <span><b>Frameworks:</b> Vega-Lite + HTML/CSS/JS</span><span class="dot">•</span>
+        <span><b>Updated:</b> <span id="lastUpdated">2026</span></span>
+      </div>
+      <div class="footer-row" style="margin-top:12px;">
+        <span><b>Data Infrastructure:</b></span>
+        <a href="https://opendata.transport.vic.gov.au" target="_blank" rel="noopener">Transport Victoria</a><span class="dot">•</span>
+        <a href="https://discover.data.vic.gov.au" target="_blank" rel="noopener">Data VIC Repository</a><span class="dot">•</span>
+        <a href="https://www.ptv.vic.gov.au" target="_blank" rel="noopener">PTV Performance Metrics</a>
+      </div>
+      <div style="margin-top:16px; opacity:0.6;">
+        Note: This visualization narrative is generated for academic communication. Observed spatial and temporal correlations do not inherently necessitate explicit causation.
+      </div>
+    </div>
+  </footer>
+  <script> document.getElementById('lastUpdated').textContent = new Date().getFullYear(); </script>
+</div>
+</body>
+</html>

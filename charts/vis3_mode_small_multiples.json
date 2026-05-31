@@ -1,0 +1,80 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+
+  "title": {
+    "text": "What makes up Melbourne’s public transport network?",
+    "subtitle": "Radial bars show each mode’s share of all stops (scaled radius)"
+  },
+
+  "width": 520,
+  "height": 520,
+  "view": { "stroke": null },
+
+  "data": {
+    "url": "data/stops.geojson",
+    "format": { "type": "json", "property": "features" }
+  },
+
+  "transform": [
+    { "calculate": "datum.properties.MODE", "as": "Mode" },
+    { "aggregate": [{ "op": "count", "as": "StopCount" }], "groupby": ["Mode"] },
+    { "joinaggregate": [{ "op": "sum", "field": "StopCount", "as": "TotalStops" }] },
+    { "calculate": "datum.StopCount / datum.TotalStops", "as": "Share" },
+
+    {
+      "window": [{ "op": "row_number", "as": "Idx" }],
+      "sort": [{ "field": "Share", "order": "descending" }]
+    },
+    { "joinaggregate": [{ "op": "count", "as": "N" }] },
+
+    { "calculate": "datum.Idx - 1", "as": "Idx0" },
+    { "calculate": "2 * PI * datum.Idx0 / datum.N", "as": "thetaStart" },
+    { "calculate": "2 * PI * (datum.Idx0 + 1) / datum.N", "as": "thetaEnd" },
+    { "calculate": "(datum.thetaStart + datum.thetaEnd) / 2", "as": "thetaMid" },
+
+    { "calculate": "round(datum.Share * 100)", "as": "SharePct" }
+  ],
+
+  "layer": [
+    {
+      "mark": {
+        "type": "arc",
+        "innerRadius": 110,
+        "cornerRadius": 7
+      },
+      "encoding": {
+        "theta": { "field": "thetaStart", "type": "quantitative" },
+        "theta2": { "field": "thetaEnd" },
+
+        "radius": {
+          "field": "Share",
+          "type": "quantitative",
+          "scale": { "type": "sqrt", "range": [140, 255] }
+        },
+
+        "color": { "field": "Mode", "type": "nominal", "title": "Mode" },
+
+        "tooltip": [
+          { "field": "Mode", "title": "Mode" },
+          { "field": "StopCount", "title": "Stops", "format": "," },
+          { "field": "Share", "title": "Share", "format": ".1%" }
+        ]
+      }
+    },
+
+    {
+      "transform": [{ "filter": "datum.SharePct >= 1" }],
+      "mark": {
+        "type": "text",
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "fill": "#222"
+      },
+      "encoding": {
+        "theta": { "field": "thetaMid", "type": "quantitative" },
+        "radius": { "value": 275 },
+        "text": { "field": "SharePct", "type": "quantitative", "format": ".0f" }
+      }
+    }
+  ]
+}

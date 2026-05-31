@@ -1,0 +1,208 @@
+/* ====== HERO SECTION ====== */
+    .hero {
+      border-radius: 28px;
+      padding: 48px 50px;
+      margin: 0 0 60px 0; /* Gives space before the maps start */
+      background:
+        radial-gradient(1200px 700px at 85% 10%, rgba(17,24,39,0.0) 0%, rgba(17,24,39,0.55) 45%, rgba(17,24,39,0.85) 75%),
+        linear-gradient(135deg, #0b1220 0%, #111827 100%);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      
+      /* THE FIX: Makes it a full-screen, perfectly centered welcome page */
+      min-height: calc(100vh - 72px); 
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* Centers content vertically */
+      align-items: center;     /* Centers content horizontally */
+      text-align: center;
+      transition: all 300ms ease;
+    }
+
+    .hero.is-spotlight {
+      box-shadow: 0 26px 80px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.15);
+      border-color: rgba(125,211,252,0.25);
+      transform: translateY(-2px);
+    }
+
+    .hero-kicker {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .hero-title .accent { color: var(--accent); }
+
+    .hero-sub {
+      max-width: 850px;
+      font-size: 19px;
+      line-height: 1.65;
+      color: rgba(249,250,251,0.85);
+      margin: 0 auto 40px auto; /* Increased margin to push grid down slightly */
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .hero-card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 24px 20px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease, background 0.2s ease;
+      
+      /* Centers the text inside the 4 small cards */
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .hero-card:hover {
+      background: rgba(255,255,255,0.07);
+      transform: translateY(-3px);
+    }
+
+    .hero-card .tag {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .hero-card .h {
+      font-size: 21px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      color: #fff;
+    }
+
+    .hero-card .p {
+      margin: 0;
+      color: rgba(249,250,251,0.75);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .hero-card a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: auto; /* Pushes the "Jump to maps ->" links to the very bottom so they align perfectly */
+      padding-top: 16px;
+    }
+    
+    .hero-card a:hover { text-decoration: underline; }
+.switcher{
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+  margin-bottom: 18px;
+}
+
+.switcher-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+.switch-title{
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.switch-buttons{
+  display:flex;
+  gap:8px;
+}
+
+.navbtn{
+  width: 40px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.navbtn:hover{
+  background:#f7f7f7;
+}
+
+.switch-slot{
+  width: 100%;
+}
+
+.panel{
+  display:none;
+}
+
+.panel.active{
+  display:block;
+}
+
+.switch-hint{
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+}
+.switch-meta{
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #222;
+}
+
+.switch-meta .label{
+  display:inline-block;
+  font-weight: 800;
+  margin-right: 6px;
+}
+
+.switch-meta ul{
+  margin: 8px 0 0 18px;
+}
+
+.switch-meta .source{
+  margin-top: 8px;
+  color: #555;
+  font-size: 13px;
+}
+/* hide one view at a time (DON'T use display:none or Vega will render at 0px) */
+.view{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  visibility:hidden;
+}
+.view.active{
+  position:relative;
+  opacity:1;
+  pointer-events:auto;
+  visibility:visible;
+}
+

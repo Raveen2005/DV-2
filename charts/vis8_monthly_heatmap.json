@@ -1,0 +1,114 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Monthly Public Transport Usage Patterns",
+    "subtitle": "Use the dropdown to compare COVID-19 disruption and recovery by mode"
+  },
+  "width": 900,
+  "height": 420,
+  "data": {
+    "url": "data/Monthly public transport patronage by mode.csv"
+  },
+  "params": [
+    {
+      "name": "ModeSelect",
+      "value": "Metropolitan train",
+      "bind": {
+        "input": "select",
+        "options": [
+          "Metropolitan train",
+          "Metropolitan tram",
+          "Metropolitan bus"
+        ],
+        "name": "Select mode: "
+      }
+    }
+  ],
+  "transform": [
+    {
+      "filter": "datum.Year < 2026"
+    },
+    {
+      "calculate": "datetime(datum.Year, datum.Month - 1, 1)",
+      "as": "Date"
+    },
+    {
+      "fold": [
+        "Metropolitan train",
+        "Metropolitan tram",
+        "Metropolitan bus"
+      ],
+      "as": ["Mode", "Patronage"]
+    },
+    {
+      "calculate": "toNumber(replace(datum.Patronage, /,/g, ''))",
+      "as": "Trips"
+    },
+    {
+      "calculate": "timeFormat(datum.Date, '%b')",
+      "as": "MonthLabel"
+    },
+    {
+      "filter": "datum.Mode == ModeSelect"
+    }
+  ],
+  "mark": {
+    "type": "rect",
+    "cornerRadius": 2,
+    "stroke": "white",
+    "strokeWidth": 1
+  },
+  "encoding": {
+    "x": {
+      "field": "MonthLabel",
+      "type": "ordinal",
+      "sort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
+      "title": "Month"
+    },
+    "y": {
+      "field": "Year",
+      "type": "ordinal",
+      "title": "Year"
+    },
+    "color": {
+      "field": "Trips",
+      "type": "quantitative",
+      "title": "Passenger Trips",
+      "scale": {
+        "scheme": "goldred"
+      }
+    },
+    "tooltip": [
+      {
+        "field": "Mode",
+        "title": "Mode"
+      },
+      {
+        "field": "Year",
+        "title": "Year"
+      },
+      {
+        "field": "MonthLabel",
+        "title": "Month"
+      },
+      {
+        "field": "Trips",
+        "title": "Passenger Trips",
+        "format": ","
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": {
+    "text": "Public Transport Stop Density Hotspots",
+    "subtitle": "Darker and larger circles show areas where stops are more concentrated"
+  },
+  "width": 900,
+  "height": 600,
+  "data": {
+    "url": "data/stops.geojson",
+    "format": {"type": "json", "property": "features"}
+  },
+  "projection": {
+    "type": "mercator",
+    "center": [144.9631, -37.8136],
+    "scale": 30000
+  },
+  "layer": [
+    {
+      "data": {
+        "url": "data/suburbs.geojson",
+        "format": {"type": "json", "property": "features"}
+      },
+      "mark": {
+        "type": "geoshape",
+        "fill": "#f4f4f4",
+        "stroke": "#d0d0d0",
+        "strokeWidth": 0.25
+      }
+    },
+    {
+      "transform": [
+        {"calculate": "datum.geometry.coordinates[0]", "as": "lon"},
+        {"calculate": "datum.geometry.coordinates[1]", "as": "lat"}
+      ],
+      "mark": {
+        "type": "circle",
+        "opacity": 0.65,
+        "stroke": "#ffffff",
+        "strokeWidth": 0.3
+      },
+      "encoding": {
+        "longitude": {"field": "lon", "type": "quantitative"},
+        "latitude": {"field": "lat", "type": "quantitative"},
+        "size": {
+          "aggregate": "count",
+          "type": "quantitative",
+          "legend": null,
+          "scale": {"range": [8, 280]}
+        },
+        "color": {
+          "aggregate": "count",
+          "type": "quantitative",
+          "title": "Stop density",
+          "scale": {
+            "domain": [1, 6],
+            "range": ["#fee8c8", "#fdbb84", "#fc8d59", "#e34a33", "#b30000"]
+          }
+        },
+        "tooltip": [
+          {
+            "aggregate": "count",
+            "type": "quantitative",
+            "title": "Stops in nearby area"
+          }
+        ]
+      }
+    }
+  ]
+}
