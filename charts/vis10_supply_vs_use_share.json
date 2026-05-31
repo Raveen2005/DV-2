@@ -7,7 +7,7 @@
   "width": 900,
   "height": 420,
   "data": {
-    "url": "../data/Monthly%20public%20transport%20patronage%20by%20mode.csv"
+    "url": "/DV-2/data/Monthly%20public%20transport%20patronage%20by%20mode.csv"
   },
   "params": [
     {
@@ -46,9 +46,7 @@
     { "calculate": "toNumber(replace(datum.Patronage, /,/g, ''))", "as": "Trips" },
 
     {
-      "joinaggregate": [
-        { "op": "sum", "field": "Trips", "as": "TotalTrips" }
-      ],
+      "joinaggregate": [{ "op": "sum", "field": "Trips", "as": "TotalTrips" }],
       "groupby": ["Date"]
     },
 
@@ -62,7 +60,7 @@
     {
       "lookup": "StopModeKey",
       "from": {
-        "data": { "url": "../data/supply_shares.csv" },
+        "data": { "url": "/DV-2/data/supply_shares.csv" },
         "key": "MODE",
         "fields": ["SupplyShare", "StopCount"]
       }
@@ -70,9 +68,9 @@
 
     { "filter": "isValid(datum.SupplyShare)" },
     { "filter": "datum.Mode == ModeSelect" },
-
     { "calculate": "datum.TripShare - datum.SupplyShare", "as": "Gap" }
   ],
+
   "layer": [
     {
       "mark": { "type": "area", "opacity": 0.18 },
@@ -92,12 +90,7 @@
       "mark": { "type": "line", "strokeWidth": 2.8 },
       "encoding": {
         "x": { "field": "Date", "type": "temporal" },
-        "y": {
-          "field": "TripShare",
-          "type": "quantitative",
-          "axis": { "format": "%" },
-          "scale": { "zero": false }
-        },
+        "y": { "field": "TripShare", "type": "quantitative", "axis": { "format": "%" }, "scale": { "zero": false } },
         "tooltip": [
           { "field": "Mode", "title": "Mode" },
           { "field": "Date", "type": "temporal", "title": "Month" },
@@ -112,11 +105,7 @@
       "mark": { "type": "line", "strokeDash": [6, 4], "strokeWidth": 2 },
       "encoding": {
         "x": { "field": "Date", "type": "temporal" },
-        "y": {
-          "field": "SupplyShare",
-          "type": "quantitative",
-          "scale": { "zero": false }
-        }
+        "y": { "field": "SupplyShare", "type": "quantitative", "scale": { "zero": false } }
       }
     }
   ]
